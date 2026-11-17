@@ -1,0 +1,15 @@
+## Interface: 16001, 11509
+## Title: W'orc out
+## Notes: Workout while you play: exercises triggered by level ups, kills, bosses, distance run, capitals and more.
+## Author: Mathieu
+## Version: 1.0.0
+## SavedVariables: WorcOutDB
+## IconTexture: Interface\Icons\Spell_Nature_Strength
+
+Core.lua
+Widgets.lua
+Anims_orc.lua
+Anims_nightelf.lua
+Model.lua
+Popup.lua
+Settings.lua

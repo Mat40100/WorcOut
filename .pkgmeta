@@ -1,0 +1,10 @@
+package-as: WorcOut
+
+ignore:
+  - .pkgmeta
+  - .github
+  - media/WorcOut-512.png
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

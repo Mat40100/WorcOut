@@ -1,6 +1,7 @@
 -- W'orc out - a live 3D orc (or your character) doing the exercise, using the game's own models.
 local _, W = ...
 local UI, C = W.UI, W.UI.C
+local L = W.L
 
 -- Animation IDs from the game's AnimationData. WoW has no exercise animations,
 -- so each exercise loops the closest ones. Tune them in game with /wo anim.
@@ -19,8 +20,17 @@ W.MOVES = {
   ["Burpees"]       = { { A.kneel, 0.5 }, { A.jumpStart, 0.25 }, { A.jump, 0.3 }, { A.jumpEnd, 0.3 } },
   ["Wall sit"]      = { { A.sit, 3 } },
 }
-W.MOVE_DONE = { { A.flex, 1.6 }, { A.roar, 1.6 } }
+W.MOVE_DONE = { { 69, 8 } }   -- EmoteDance (the in-game /dance); check with /wo anim 69
 W.MOVE_DEFAULT = { { A.cheer, 1.5 } }
+
+-- A random victory dance for the current coach (sheets named "_dance_*"), or nil.
+function W:RandomDance()
+  local list = {}
+  for name in pairs(self.SHEETS and self.SHEETS[self:Coach()] or {}) do
+    if name:find("^_dance_") then list[#list + 1] = name end
+  end
+  return list[1] and list[math.random(#list)]
+end
 
 -- Model setup ---------------------------------------------------------------------------
 -- The orc coach is an NPC model, by creature ID (default: Orgrimmar Grunt).
@@ -92,15 +102,18 @@ function UI.Stage(parent, w, h)
   end
 
   -- Exercise: its sprite sheet if one exists, otherwise the 3D model.
-  function stage:PlayExercise(name)
+  -- fallback: the 3D model's own animations (W.MOVES[name], or `fallback`)
+  function stage:PlayExercise(name, fallback)
     local sheets = W.SHEETS and W.SHEETS[W:Coach()]
     local sheet = sheets and sheets[name]
-    if not sheet then return self:Play(W.MOVES[name]) end
+    if not sheet then return self:Play(fallback or W.MOVES[name]) end
     seq = nil; m:Hide()
     flip:SetTexture(sheet.path)
     -- fit the frame (sheet.w x sheet.h) inside the stage, keeping its shape
     local scale = math.min((w - 8) / sheet.w, (h - 8) / sheet.h)
     flip:SetSize(sheet.w * scale, sheet.h * scale)
+    COLS, ROWS = sheet.cols or 4, sheet.rows or 4
+    FRAMES = COLS * ROWS
     fps = FRAMES / math.max(0.5, sheet.duration or 1.3)
     clock = 0
     flip:SetTexCoord(0, 1 / COLS, 0, 1 / ROWS)   -- first frame right away
@@ -114,7 +127,7 @@ end
 local lab
 local function OpenLab()
   if not lab then
-    lab = UI.Window("WorcOutAnimLab", 300, 380, "Animation lab")
+    lab = UI.Window("WorcOutAnimLab", 300, 380, L["Animation lab"])
     lab:SetPoint("CENTER", 380, 0)
     local stage = UI.Stage(lab, 260, 220)
     stage:SetPoint("TOP", 0, -50)
@@ -124,11 +137,11 @@ local function OpenLab()
     label:SetJustifyH("CENTER")
     local hint = UI.Text(lab, 12, C.muted)
     hint:SetPoint("TOP", label, "BOTTOM", 0, -4)
-    hint:SetText("Animation ID (some IDs do nothing)")
+    hint:SetText(L["Animation ID (some IDs do nothing)"])
     local function show() label:SetText(id); stage:Hold(id) end
-    local prev = UI.Button(lab, "< Prev", "ghost", 120, 30, function() id = math.max(0, id - 1); show() end)
+    local prev = UI.Button(lab, L["< Prev"], "ghost", 120, 30, function() id = math.max(0, id - 1); show() end)
     prev:SetPoint("BOTTOMLEFT", 20, 20)
-    local nxt = UI.Button(lab, "Next >", "primary", 120, 30, function() id = id + 1; show() end)
+    local nxt = UI.Button(lab, L["Next >"], "primary", 120, 30, function() id = id + 1; show() end)
     nxt:SetPoint("BOTTOMRIGHT", -20, 20)
     lab:SetScript("OnShow", show)
     lab.set = function(n) id = n; show() end

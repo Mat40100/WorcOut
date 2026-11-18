@@ -104,7 +104,10 @@ end
 function UI.Kicker(parent, size, c)
   local fs = UI.Text(parent, size or 11, c or C.gold, true)
   local set = fs.SetText
-  fs.SetText = function(self, t) set(self, ((t or ""):upper():gsub("(.)", "%1 "):sub(1, -2))) end
+  fs.SetText = function(self, t)
+    local spaced = (t or ""):upper():gsub("([%z\1-\127\194-\244][\128-\191]*)", "%1 ")
+    set(self, spaced:sub(1, -2))
+  end
   return fs
 end
 

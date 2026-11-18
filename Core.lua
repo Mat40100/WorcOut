@@ -1,5 +1,6 @@
 -- W'orc out - core: settings, triggers, exercise queue, stats.
 local ADDON, W = ...
+local L = W.L
 _G.WorcOut = W
 
 W.NAME = "W'orc out"
@@ -8,14 +9,14 @@ W.TAG = "[W'orc out]"
 -- Defaults ---------------------------------------------------------------
 -- Every trigger: on/off, "every N" threshold, rep multiplier.
 W.TRIGGERS = {
-  { key = "levelup", label = "Level up",        desc = "Every time you gain levels",        unit = "levels", unit1 = "level",  every = 1,  mult = 1.5 },
-  { key = "kills",   label = "Mobs killed",     desc = "Tagged by you or your group",  unit = "kills", unit1 = "kill",   every = 25, mult = 1 },
-  { key = "boss",    label = "Boss killed",     desc = "Dungeon and raid bosses",           unit = "bosses", unit1 = "boss",  every = 1,  mult = 2 },
-  { key = "distance",label = "Distance run",    desc = "On foot, taxis excluded",           unit = "km",      every = 2,  mult = 1 },
-  { key = "capital", label = "Enter a capital", desc = "Max once every 10 minutes",         unit = "visits", unit1 = "visit",  every = 1,  mult = 1 },
-  { key = "quests",  label = "Quests done",     desc = "Quests turned in",                  unit = "quests", unit1 = "quest",  every = 5,  mult = 1 },
-  { key = "death",   label = "You died",        desc = "Pay the price of failure",          unit = "deaths", unit1 = "death",  every = 1,  mult = 1 },
-  { key = "time",    label = "Time played",     desc = "Session time, in minutes",          unit = "min",     every = 45, mult = 1 },
+  { key = "levelup", label = L["Level up"],        desc = L["Every time you gain levels"],        unit = L["levels"], unit1 = L["level"],  every = 1,  mult = 1.5 },
+  { key = "kills",   label = L["Mobs killed"],     desc = L["Tagged by you or your group"],  unit = L["kills"], unit1 = L["kill"],   every = 25, mult = 1 },
+  { key = "boss",    label = L["Boss killed"],     desc = L["Dungeon and raid bosses"],           unit = L["bosses"], unit1 = L["boss"],  every = 1,  mult = 2 },
+  { key = "distance",label = L["Distance run"],    desc = L["On foot, taxis excluded"],           unit = "km",      every = 2,  mult = 1 },
+  { key = "capital", label = L["Enter a capital"], desc = L["Max once every 10 minutes"],         unit = L["visits"], unit1 = L["visit"],  every = 1,  mult = 1 },
+  { key = "quests",  label = L["Quests done"],     desc = L["Quests turned in"],                  unit = L["quests"], unit1 = L["quest"],  every = 5,  mult = 1 },
+  { key = "death",   label = L["You died"],        desc = L["Pay the price of failure"],          unit = L["deaths"], unit1 = L["death"],  every = 1,  mult = 1 },
+  { key = "time",    label = L["Time played"],     desc = L["Session time, in minutes"],          unit = "min",     every = 45, mult = 1 },
 }
 
 W.DEFAULT_EXERCISES = {
@@ -41,6 +42,7 @@ local DEFAULTS = {
   countMounted = false,
   coach = "auto",          -- auto (by faction) | orc | nightelf
   launcher = { shown = true },
+  tracker = { shown = true, locked = false },
   stats = { total = 0, byName = {}, days = {}, streak = 0, lastDay = nil },
 }
 
@@ -114,7 +116,8 @@ function W:BuildTask(key, reason)
 end
 
 function W:FormatTask(task)
-  return task.timed and (task.amount .. "s of " .. task.name:lower()) or (task.amount .. " " .. task.name:lower())
+  local n = L[task.name]:lower()
+  return task.timed and L["%ds of %s"]:format(task.amount, n) or (task.amount .. " " .. n)
 end
 
 -- Queue -------------------------------------------------------------------
@@ -176,13 +179,13 @@ end
 function W:SendGroupBreak(task)
   local ch = self:GroupChannel()
   if not ch then return end
-  SendChatMessage(string.format("%s Quick %d min break for my workout: %s! Back soon. (addon: W'orc out)",
+  SendChatMessage(string.format(L["%s Quick %d min break for my workout: %s! Back soon. (addon: W'orc out)"],
     self.TAG, self.db.breakMinutes, self:FormatTask(task)), ch)
 end
 
 function W:SendGuildDone(task)
   if not IsInGuild() then return end
-  SendChatMessage(string.format("%s Just did %s (%s). %d exercises done so far! (addon: W'orc out)",
+  SendChatMessage(string.format(L["%s Just did %s (%s). %d exercises done so far! (addon: W'orc out)"],
     self.TAG, self:FormatTask(task), task.reason, self.db.stats.total), "GUILD")
 end
 
@@ -212,7 +215,7 @@ local function DistanceTick()
       local km = 1093.6                      -- yards per km
       if W.yards >= km then
         W.yards = W.yards - km
-        W:Add("distance", 1, function() return "You ran " .. W:Trigger("distance").every .. " km" end)
+        W:Add("distance", 1, function() return L["You ran %d km"]:format(W:Trigger("distance").every) end)
       end
     end
   end
@@ -232,12 +235,12 @@ end
 function events.PLAYER_LOGIN()
   C_Timer.NewTicker(1, DistanceTick)
   C_Timer.NewTicker(60, function()
-    W:Add("time", 1, function() return W:Trigger("time").every .. " minutes of play" end)
+    W:Add("time", 1, function() return L["%d minutes of play"]:format(W:Trigger("time").every) end)
   end)
 end
 
 function events.PLAYER_LEVEL_UP(level)
-  W:Add("levelup", 1, function() return "Level " .. level .. "!" end)
+  W:Add("levelup", 1, function() return L["Level %d!"]:format(level) end)
 end
 
 -- Kills: the combat log is restricted for addons on this client, so we watch units we
@@ -249,7 +252,7 @@ local function CheckKill(unit)
   local guid = UnitGUID(unit)
   if not guid or counted[guid] then return end
   counted[guid] = GetTime()
-  W:Add("kills", 1, function() return W:Trigger("kills").every .. " mobs killed" end)
+  W:Add("kills", 1, function() return L["%d mobs killed"]:format(W:Trigger("kills").every) end)
 end
 
 function events.UNIT_HEALTH(unit) CheckKill(unit) end
@@ -262,22 +265,22 @@ C_Timer.NewTicker(300, function()
 end)
 
 function events.ENCOUNTER_END(_, name, _, _, success)
-  if success == 1 then W:Add("boss", 1, function() return (name or "Boss") .. " defeated" end) end
+  if success == 1 then W:Add("boss", 1, function() return L["%s defeated"]:format(name or L["Boss"]) end) end
 end
 
 function events.QUEST_TURNED_IN()
-  W:Add("quests", 1, function() return W:Trigger("quests").every .. " quests done" end)
+  W:Add("quests", 1, function() return L["%d quests done"]:format(W:Trigger("quests").every) end)
 end
 
 function events.PLAYER_DEAD()
-  W:Add("death", 1, function() return "You died" end)
+  W:Add("death", 1, function() return L["You died"] end)
 end
 
 function events.ZONE_CHANGED_NEW_AREA()
   local map = C_Map.GetBestMapForUnit("player")
   if map and CAPITALS[map] and GetTime() - lastCapital > 600 then
     lastCapital = GetTime()
-    W:Add("capital", 1, function() return "Welcome to " .. GetZoneText() end)
+    W:Add("capital", 1, function() return L["Welcome to %s"]:format(GetZoneText()) end)
   end
 end
 
@@ -292,7 +295,7 @@ SLASH_WORCOUT2 = "/wo"
 SlashCmdList.WORCOUT = function(msg)
   msg = (msg or ""):lower()
   if msg == "test" then
-    W:Request("levelup", "Test workout")
+    W:Request("levelup", L["Test workout"])
   elseif msg:match("^coach") then
     local id = tonumber(msg:match("%d+"))
     W.db.orcCreature = id
@@ -304,7 +307,7 @@ SlashCmdList.WORCOUT = function(msg)
     if n then lab.set(n) end
   elseif msg == "toggle" then
     W.db.enabled = not W.db.enabled
-    W:Print(W.db.enabled and "enabled" or "paused")
+    W:Print(W.db.enabled and L["enabled"] or L["paused"])
     W:Fire("SETTINGS")
   else
     W:Fire("OPEN_SETTINGS")

@@ -1,6 +1,7 @@
 -- W'orc out - settings window and launcher button.
 local _, W = ...
 local UI, C = W.UI, W.UI.C
+local L = W.L
 
 local WIN_W, WIN_H, NAV_W = 680, 540, 168
 local f = UI.Window("WorcOutSettings", WIN_W, WIN_H)
@@ -17,7 +18,7 @@ logo:SetPoint("TOPLEFT", 18, -20)
 logo:SetText("W'orc out")
 local sub = UI.Text(nav, 12, C.muted)
 sub:SetPoint("TOPLEFT", logo, "BOTTOMLEFT", 0, -4)
-sub:SetText("Workout while you play")
+sub:SetText(L["Workout while you play"])
 
 -- Master switch
 local masterLabel = UI.Text(nav, 13, C.text)
@@ -105,7 +106,7 @@ end
 
 -- Page: Triggers --------------------------------------------------------------------------
 do
-  local p = NewPage("triggers", "Triggers", "Choose what makes you work out, and how often.")
+  local p = NewPage("triggers", L["Triggers"], L["Choose what makes you work out, and how often."])
   local y = 0
   for _, def in ipairs(W.TRIGGERS) do
     local key = def.key
@@ -127,7 +128,7 @@ do
     local unit = UI.Text(r, 12, C.muted)
     unit:SetPoint("RIGHT", every, "LEFT", -8, 0)
     unit:SetJustifyH("RIGHT")
-    unit:SetText("every")
+    unit:SetText(L["every"])
 
     local prog = UI.Progress(r, CW - 2, 2)
     prog:SetPoint("BOTTOMLEFT", 1, 1)
@@ -143,7 +144,7 @@ end
 
 -- Page: Exercises ----------------------------------------------------------------------------
 do
-  local p = NewPage("exercises", "Exercises", "Picked at random among the active ones.")
+  local p = NewPage("exercises", L["Exercises"], L["Picked at random among the active ones."])
   local scroll = CreateFrame("ScrollFrame", nil, p)
   scroll:SetPoint("TOPLEFT"); scroll:SetPoint("BOTTOMRIGHT", 0, 56)
   local list = CreateFrame("Frame", nil, scroll)
@@ -169,16 +170,16 @@ do
         r.sw:SetPoint("LEFT", 14, 0)
         r.del = UI.IconButton(r, 26, "x", function()
           table.remove(W.db.exercises, r.index); f:Refresh()
-        end, "Remove")
+        end, L["Remove"])
         r.del:SetPoint("RIGHT", -10, 0)
         r.amount = UI.Stepper(r, 110, function() return r.ex.amount end, function(v) r.ex.amount = v end,
-          1, 300, 1, function(v) return r.ex.timed and (v .. " s") or (v .. " reps") end)
+          1, 300, 1, function(v) return r.ex.timed and (v .. " s") or (v .. " " .. L["reps"]) end)
         r.amount:SetPoint("RIGHT", r.del, "LEFT", -8, 0)
         rows[i] = r
       end
       r.ex, r.index = ex, i
       r:ClearAllPoints(); r:SetPoint("TOPLEFT", 0, y)
-      r.title:SetText(ex.name)
+      r.title:SetText(L[ex.name])
       r.icon.tex:SetTexture(ex.icon or W.CUSTOM_ICON)
       r.sw:Refresh(); r.amount:Refresh()
       r:Show()
@@ -202,12 +203,12 @@ do
   input:SetTextColor(unpack(C.text))
   input:SetTextInsets(8, 8, 0, 0)
   local hint = UI.Text(input, 14, C.muted)
-  hint:SetPoint("LEFT", 8, 0); hint:SetText("New exercise name")
+  hint:SetPoint("LEFT", 8, 0); hint:SetText(L["New exercise name"])
   input:SetScript("OnTextChanged", function(self) hint:SetShown(self:GetText() == "") end)
   input:SetScript("OnEscapePressed", input.ClearFocus)
 
   local timed = false
-  local kind = UI.Segmented(add, { { value = false, label = "Reps" }, { value = true, label = "Timed" } },
+  local kind = UI.Segmented(add, { { value = false, label = L["Reps"] }, { value = true, label = L["Timed"] } },
     function() return timed end, function(v) timed = v end, 110)
   kind:SetPoint("LEFT", ibg, "RIGHT", 8, 0)
 
@@ -219,25 +220,25 @@ do
     f:Refresh()
   end
   input:SetScript("OnEnterPressed", Add)
-  local addBtn = UI.Button(add, "Add", "primary", 80, 28, Add)
+  local addBtn = UI.Button(add, L["Add"], "primary", 80, 28, Add)
   addBtn:SetPoint("RIGHT", -8, 0)
 end
 
 -- Page: Social ---------------------------------------------------------------------------------
 do
-  local p = NewPage("social", "Social", "Let your group and guild know you're getting swole.")
-  local opts = { { value = "ask", label = "Ask" }, { value = "always", label = "Always" }, { value = "never", label = "Never" } }
+  local p = NewPage("social", L["Social"], L["Let your group and guild know you're getting swole."])
+  local opts = { { value = "ask", label = L["Ask"] }, { value = "always", label = L["Always"] }, { value = "never", label = L["Never"] } }
 
-  local r1 = Row(p, 0, 64, "Group break message", "When a workout starts in a group")
+  local r1 = Row(p, 0, 64, L["Group break message"], L["When a workout starts in a group"])
   local s1 = UI.Segmented(r1, opts, function() return W.db.askGroup end, function(v) W.db.askGroup = v; f:Refresh() end, 210)
   s1:SetPoint("RIGHT", -14, 0)
 
-  local r2 = Row(p, -72, 64, "Break duration announced", "Minutes you tell your group")
+  local r2 = Row(p, -72, 64, L["Break duration announced"], L["Minutes you tell your group"])
   local s2 = UI.Stepper(r2, 110, function() return W.db.breakMinutes end, function(v) W.db.breakMinutes = v; f:Refresh() end,
     1, 15, 1, function(v) return v .. " min" end)
   s2:SetPoint("RIGHT", -14, 0)
 
-  local r3 = Row(p, -144, 64, "Guild share", "After you complete an exercise")
+  local r3 = Row(p, -144, 64, L["Guild share"], L["After you complete an exercise"])
   local s3 = UI.Segmented(r3, opts, function() return W.db.askGuild end, function(v) W.db.askGuild = v; f:Refresh() end, 210)
   s3:SetPoint("RIGHT", -14, 0)
 
@@ -245,57 +246,72 @@ do
   pv:SetSize(CW, 104)
   pv:SetPoint("TOPLEFT", 0, -228)
   local pvt = UI.Kicker(pv, 10, C.gold)
-  pvt:SetPoint("TOPLEFT", 14, -12); pvt:SetText("PREVIEW")
+  pvt:SetPoint("TOPLEFT", 14, -12); pvt:SetText(L["PREVIEW"])
   local g = UI.Text(pv, 13, { 0.67, 0.67, 1 })
   g:SetPoint("TOPLEFT", 14, -34); g:SetPoint("RIGHT", -14, 0)
   local gu = UI.Text(pv, 13, { 0.25, 1, 0.25 })
   gu:SetPoint("TOPLEFT", g, "BOTTOMLEFT", 0, -10); gu:SetPoint("RIGHT", -14, 0)
   onRefresh(function()
     s1:Refresh(); s2:Refresh(); s3:Refresh()
-    local me = UnitName("player") or "You"
-    g:SetText(string.format("[Party] [%s]: [W'orc out] Quick %d min break for my workout: 15 squats! Back soon. (addon: W'orc out)", me, W.db.breakMinutes))
-    gu:SetText(string.format("[Guild] [%s]: [W'orc out] Just did 15 squats (Level 24!). %d exercises done so far! (addon: W'orc out)", me, W.db.stats.total))
+    local me = UnitName("player") or L["You"]
+    -- same messages as the ones really sent, with sample values
+    local sample = { name = "Squats", amount = 15, timed = false, reason = L["Level %d!"]:format(24) }
+    g:SetText(("[%s] [%s]: "):format(L["Party"], me) ..
+      L["%s Quick %d min break for my workout: %s! Back soon. (addon: W'orc out)"]:format(W.TAG, W.db.breakMinutes, W:FormatTask(sample)))
+    gu:SetText(("[%s] [%s]: "):format(L["Guild"], me) ..
+      L["%s Just did %s (%s). %d exercises done so far! (addon: W'orc out)"]:format(W.TAG, W:FormatTask(sample), sample.reason, W.db.stats.total))
   end)
 end
 
 -- Page: General -------------------------------------------------------------------------------
 do
-  local p = NewPage("general", "General", "Difficulty and behaviour.")
-  local r1 = Row(p, 0, 64, "Difficulty", "Multiplies every exercise amount")
+  local p = NewPage("general", L["General"], L["Difficulty and behaviour."])
+  local r1 = Row(p, 0, 56, L["Difficulty"], L["Multiplies every exercise amount"])
   local s1 = UI.Segmented(r1, {
-    { value = 0.5, label = "Chill" }, { value = 1, label = "Normal" },
-    { value = 1.5, label = "Hard" }, { value = 2, label = "Orc" } },
+    { value = 0.5, label = L["Chill"] }, { value = 1, label = L["Normal"] },
+    { value = 1.5, label = L["Hard"] }, { value = 2, label = L["Orc"] } },
     function() return W.db.difficulty end, function(v) W.db.difficulty = v end, 260)
   s1:SetPoint("RIGHT", -14, 0)
 
   local function toggleRow(y, title, desc, key)
-    local r = Row(p, y, 64, title, desc)
+    local r = Row(p, y, 56, title, desc)
     local sw = UI.Switch(r, function() return W.db[key] end, function(v) W.db[key] = v end)
     sw:SetPoint("RIGHT", -14, 0)
     onRefresh(function() sw:Refresh() end)
   end
-  toggleRow(-72, "Wait for combat to end", "Workouts never pop up mid-fight", "deferInCombat")
-  toggleRow(-144, "Sound", "Play a sound when a workout starts", "sound")
-  toggleRow(-216, "Count distance while mounted", "Off: only running on foot counts", "countMounted")
-  local r5 = Row(p, -288, 64, "Coach", "Auto: orc for Horde, night elf for Alliance")
-  local s5 = UI.Segmented(r5, { { value = "auto", label = "Auto" }, { value = "orc", label = "Orc" },
-    { value = "nightelf", label = "Night elf" } },
+  toggleRow(-64, L["Wait for combat to end"], L["Workouts never pop up mid-fight"], "deferInCombat")
+  toggleRow(-128, L["Sound"], L["Play a sound when a workout starts"], "sound")
+  toggleRow(-192, L["Count distance while mounted"], L["Off: only running on foot counts"], "countMounted")
+  local r5 = Row(p, -256, 56, L["Coach"], L["Auto: orc for Horde, night elf for Alliance"])
+  local s5 = UI.Segmented(r5, { { value = "auto", label = L["Auto"] }, { value = "orc", label = L["Orc"] },
+    { value = "nightelf", label = L["Night elf"] } },
     function() return W.db.coach end, function(v) W.db.coach = v end, 240)
   s5:SetPoint("RIGHT", -14, 0)
   onRefresh(function() s5:Refresh() end)
+
+  local r6 = Row(p, -320, 56, L["Tracker"], L["Small window showing your next workouts"])
+  local sw6 = UI.Switch(r6, function() return W.db.tracker.shown end,
+    function(v) W.db.tracker.shown = v; W:ApplyTracker() end)
+  sw6:SetPoint("RIGHT", -14, 0)
+  local lockLabel = UI.Text(r6, 12, C.muted)
+  local lock = UI.Switch(r6, function() return W.db.tracker.locked end, function(v) W.db.tracker.locked = v end)
+  lock:SetPoint("RIGHT", sw6, "LEFT", -70, 0)
+  lockLabel:SetPoint("RIGHT", lock, "LEFT", -8, 0)
+  lockLabel:SetText(L["Lock"])
+  onRefresh(function() sw6:Refresh(); lock:Refresh() end)
   onRefresh(function() s1:Refresh() end)
 
-  local test = UI.Button(p, "Try a workout now", "primary", 200, 36, function()
-    f:Hide(); W:Request("levelup", "Test workout")
+  local test = UI.Button(p, L["Try a workout now"], "primary", 200, 36, function()
+    f:Hide(); W:Request("levelup", L["Test workout"])
   end)
-  test:SetPoint("TOPLEFT", 0, -372)
+  test:SetPoint("TOPLEFT", 0, -392)
 end
 
 -- Page: Stats -------------------------------------------------------------------------------------
 do
-  local p = NewPage("stats", "Stats", "Every rep counts.")
+  local p = NewPage("stats", L["Stats"], L["Every rep counts."])
   local cards = {}
-  local labels = { "Exercises done", "Today", "Day streak" }
+  local labels = { L["Exercises done"], L["Today"], L["Day streak"] }
   local cw = (CW - 24) / 3
   for i, l in ipairs(labels) do
     local c = UI.Box(p, C.surface, C.border)
@@ -311,7 +327,7 @@ do
 
   local listTitle = UI.Kicker(p, 10, C.gold)
   listTitle:SetPoint("TOPLEFT", 0, -110)
-  listTitle:SetText("TOTAL BY EXERCISE")
+  listTitle:SetText(L["TOTAL BY EXERCISE"])
   local lines = {}
 
   onRefresh(function()
@@ -335,31 +351,31 @@ do
         lines[i] = l
       end
       l:SetPoint("TOPLEFT", 0, -132 - (i - 1) * 34)
-      l.n:SetText(sorted[i][1])
+      l.n:SetText(L[sorted[i][1]])
       local timed
       for _, e in ipairs(W.db.exercises) do if e.name == sorted[i][1] then timed = e.timed end end
-      l.v:SetText(sorted[i][2] .. (timed and " s" or " reps"))
+      l.v:SetText(sorted[i][2] .. (timed and " s" or " " .. L["reps"]))
       l.bar:SetProgress(sorted[i][2] / max)
       l:Show()
     end
     if #sorted == 0 then
       lines[0] = lines[0] or UI.Text(p, 13, C.muted)
       lines[0]:SetPoint("TOPLEFT", 0, -136)
-      lines[0]:SetText("Nothing yet. Go kill some boars.")
+      lines[0]:SetText(L["Nothing yet. Go kill some boars."])
       lines[0]:Show()
     elseif lines[0] then lines[0]:Hide() end
   end)
 end
 
-NavButton("triggers", "Triggers", -84)
-NavButton("exercises", "Exercises", -122)
-NavButton("social", "Social", -160)
-NavButton("general", "General", -198)
-NavButton("stats", "Stats", -236)
+NavButton("triggers", L["Triggers"], -84)
+NavButton("exercises", L["Exercises"], -122)
+NavButton("social", L["Social"], -160)
+NavButton("general", L["General"], -198)
+NavButton("stats", L["Stats"], -236)
 
 function f:Refresh()
   master:Refresh()
-  masterLabel:SetText(W.db.enabled and "Active" or "Paused")
+  masterLabel:SetText(W.db.enabled and L["Active"] or L["Paused"])
   for _, fn in ipairs(refreshers) do fn() end
 end
 
@@ -411,9 +427,9 @@ lbtn:SetScript("OnEnter", function(self)
   GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
   GameTooltip:AddLine("W'orc out")
   GameTooltip:AddLine(W.db.enabled and "|cff7ccb4aActive|r" or "|cff999999Paused|r")
-  GameTooltip:AddLine("Left-click: settings", 1, 1, 1)
-  GameTooltip:AddLine("Right-click: pause / resume", 1, 1, 1)
-  GameTooltip:AddLine("Drag: move", 1, 1, 1)
+  GameTooltip:AddLine(L["Left-click: settings"], 1, 1, 1)
+  GameTooltip:AddLine(L["Right-click: pause / resume"], 1, 1, 1)
+  GameTooltip:AddLine(L["Drag: move"], 1, 1, 1)
   GameTooltip:Show()
 end)
 lbtn:SetScript("OnLeave", function() GameTooltip:Hide() end)

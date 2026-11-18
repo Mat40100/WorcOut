@@ -2,11 +2,17 @@
 local _, W = ...
 W.SHEETS = W.SHEETS or {}
 W.SHEETS["nightelf"] = {
-  ["Burpees"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\burpees", w = 256, h = 256, duration = 3.133 },
-  ["Jumping jacks"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\jumpingjacks", w = 256, h = 256, duration = 1.067 },
-  ["Plank"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\plank", w = 256, h = 256, duration = 3.000 },
-  ["Push-ups"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\pushups", w = 256, h = 256, duration = 1.533 },
-  ["Sit-ups"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\situps", w = 256, h = 256, duration = 2.233 },
-  ["Squats"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\squats", w = 256, h = 256, duration = 1.867 },
-  ["Wall sit"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\wallsit", w = 256, h = 256, duration = 1.167 },
+  ["Burpees"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\burpees", w = 256, h = 256, duration = 3.133, cols = 4, rows = 4 },
+  ["_dance_house"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\dance_house", w = 256, h = 256, duration = 5.300, cols = 8, rows = 8 },
+  ["_dance_macarena"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\dance_macarena", w = 256, h = 256, duration = 5.300, cols = 8, rows = 8 },
+  ["_dance_snake"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\dance_snake", w = 256, h = 256, duration = 5.300, cols = 8, rows = 8 },
+  ["_dance_step"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\dance_step", w = 256, h = 256, duration = 5.300, cols = 8, rows = 8 },
+  ["_dance_twist"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\dance_twist", w = 256, h = 256, duration = 5.300, cols = 8, rows = 8 },
+  ["_dance_ymca"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\dance_ymca", w = 256, h = 256, duration = 4.500, cols = 8, rows = 8 },
+  ["Jumping jacks"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\jumpingjacks", w = 256, h = 256, duration = 1.067, cols = 4, rows = 4 },
+  ["Plank"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\plank", w = 256, h = 256, duration = 3.000, cols = 4, rows = 4 },
+  ["Push-ups"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\pushups", w = 256, h = 256, duration = 1.533, cols = 4, rows = 4 },
+  ["Sit-ups"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\situps", w = 256, h = 256, duration = 2.233, cols = 4, rows = 4 },
+  ["Squats"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\squats", w = 256, h = 256, duration = 1.867, cols = 4, rows = 4 },
+  ["Wall sit"] = { path = "Interface\\AddOns\\WorcOut\\media\\anim\\nightelf\\wallsit", w = 256, h = 256, duration = 1.167, cols = 4, rows = 4 },
 }

@@ -1,6 +1,7 @@
 -- W'orc out - the workout window: exercise, timer, group break and guild share.
 local _, W = ...
 local UI, C = W.UI, W.UI.C
+local L = W.L
 
 local WIDTH = 380
 local f = UI.Window("WorcOutPopup", WIDTH, 640)
@@ -11,7 +12,7 @@ f:SetScript("OnHide", function() if W.current then W:Skip() end end)
 -- Header -------------------------------------------------------------------------
 local kicker = UI.Kicker(f, 11, C.gold)
 kicker:SetPoint("TOP", 0, -26)
-kicker:SetText("WORKOUT TIME")
+kicker:SetText(L["WORKOUT TIME"])
 
 local reason = UI.Text(f, 14, C.muted)
 reason:SetPoint("TOP", kicker, "BOTTOM", 0, -6)
@@ -41,12 +42,12 @@ local bar = UI.Progress(f, WIDTH - 80, 6)
 bar:SetPoint("TOP", unit, "BOTTOM", 0, -14)
 
 -- Actions ----------------------------------------------------------------------------
-local done = UI.Button(f, "Done", "primary", WIDTH - 40, 40)
+local done = UI.Button(f, L["Done"], "primary", WIDTH - 40, 40)
 done:SetPoint("BOTTOM", 0, 64)
 
-local snooze = UI.Button(f, "Snooze 5 min", "ghost", (WIDTH - 48) / 2, 32, function() W:Snooze(5) end)
+local snooze = UI.Button(f, L["Snooze 5 min"], "ghost", (WIDTH - 48) / 2, 32, function() W:Snooze(5) end)
 snooze:SetPoint("BOTTOMLEFT", 20, 22)
-local skip = UI.Button(f, "Skip", "ghost", (WIDTH - 48) / 2, 32, function() W:Skip() end)
+local skip = UI.Button(f, L["Skip"], "ghost", (WIDTH - 48) / 2, 32, function() W:Skip() end)
 skip:SetPoint("BOTTOMRIGHT", -20, 22)
 
 -- Banner (group break / guild share) ----------------------------------------------------
@@ -57,9 +58,9 @@ banner:Hide()
 banner.text = UI.Text(banner, 13, C.text)
 banner.text:SetPoint("TOPLEFT", 12, -10)
 banner.text:SetPoint("RIGHT", -12, 0)
-banner.yes = UI.Button(banner, "Tell group", "primary", 110, 24)
+banner.yes = UI.Button(banner, L["Tell group"], "primary", 110, 24)
 banner.yes:SetPoint("BOTTOMLEFT", 12, 8)
-banner.no = UI.Button(banner, "No thanks", "ghost", 90, 24)
+banner.no = UI.Button(banner, L["No thanks"], "ghost", 90, 24)
 banner.no:SetPoint("LEFT", banner.yes, "RIGHT", 8, 0)
 
 local function ShowBanner(text, yesLabel, onYes)
@@ -75,10 +76,49 @@ local timerLeft, ticker
 local function StopTimer() if ticker then ticker:Cancel(); ticker = nil end end
 local function fmtTime(s) return string.format("%d:%02d", math.floor(s / 60), s % 60) end
 
+-- Countdown overlay on the stage: 3, 2, 1, GO! ---------------------------------------------
+-- in its own frame so it covers the 3D model too
+local cd = CreateFrame("Frame", nil, stage)
+cd:SetAllPoints()
+cd:SetFrameLevel(stage.model:GetFrameLevel() + 5)
+local veil = cd:CreateTexture(nil, "BACKGROUND")
+veil:SetAllPoints()
+veil:SetColorTexture(0, 0, 0, 0.55)
+veil:Hide()
+local count = UI.Text(cd, 96, C.gold, true, "OVERLAY")
+count:SetPoint("CENTER", 0, 4)
+count:SetJustifyH("CENTER")
+count:Hide()
+
+local COUNTDOWN = 3
+local function HideCountdown() veil:Hide(); count:Hide() end
+
+local function Countdown(seconds, onGo)
+  StopTimer()
+  local left = seconds
+  local function show()
+    veil:Show(); count:Show()
+    count:SetText(left > 0 and left or L["GO!"])
+    count:SetTextColor(unpack(left > 0 and C.gold or C.accent))
+    if W.db.sound then PlaySound(left > 0 and (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or 856)
+      or (SOUNDKIT and SOUNDKIT.READY_CHECK or 8960)) end
+  end
+  done:SetLabel(L["Get ready..."])
+  done:Disable()
+  show()
+  ticker = C_Timer.NewTicker(1, function()
+    left = left - 1
+    if left >= 0 then show() return end
+    StopTimer()
+    HideCountdown()
+    onGo()
+  end)
+end
+
 local function StartTimer(task)
   StopTimer()
   timerLeft = task.amount
-  done:SetLabel("Running...")
+  done:SetLabel(L["Running..."])
   done:Disable()
   ticker = C_Timer.NewTicker(1, function()
     timerLeft = timerLeft - 1
@@ -88,7 +128,7 @@ local function StartTimer(task)
       StopTimer()
       if W.db.sound then PlaySound(SOUNDKIT and SOUNDKIT.UI_QUEST_ROLLING_FORWARD_01 or 888) end
       done:Enable()
-      done:SetLabel("Done")
+      done:SetLabel(L["Done"])
       done:SetScript("OnClick", function() W:Complete() end)
     end
   end)
@@ -97,27 +137,34 @@ end
 -- States --------------------------------------------------------------------------------------
 local function ShowTask(task)
   StopTimer()
+  HideCountdown()
   f.doneScreen = false
-  kicker:SetText("WORKOUT TIME")
+  kicker:SetText(L["WORKOUT TIME"])
   reason:SetText(task.reason)
   icon.tex:SetTexture(task.icon)
   icon:Show()
   stage:PlayExercise(task.name)
-  name:SetText(task.name)
+  name:SetText(L[task.name])
   bar:SetProgress(0)
   bar:SetShown(task.timed)
   snooze:Show(); skip:Show()
   done:Enable()
   if task.timed then
     amount:SetText(fmtTime(task.amount))
-    unit:SetText("hold it")
-    done:SetLabel("Start timer")
-    done:SetScript("OnClick", function() StartTimer(task) end)
+    unit:SetText(L["hold it"])
+    done:SetLabel(L["Start timer"])
+    done:SetScript("OnClick", function() Countdown(COUNTDOWN, function() StartTimer(task) end) end)
   else
     amount:SetText(task.amount)
-    unit:SetText("reps")
-    done:SetLabel("Done")
-    done:SetScript("OnClick", function() W:Complete() end)
+    unit:SetText(L["reps"])
+    done:SetLabel(L["Start"])
+    done:SetScript("OnClick", function()
+      Countdown(COUNTDOWN, function()
+        done:Enable()
+        done:SetLabel(L["Done"])
+        done:SetScript("OnClick", function() W:Complete() end)
+      end)
+    end)
   end
 
   banner:Hide()
@@ -125,8 +172,8 @@ local function ShowTask(task)
     if W.db.askGroup == "always" then
       W:SendGroupBreak(task)
     elseif W.db.askGroup == "ask" then
-      ShowBanner(string.format("You're in a group. Tell them you're taking a %d min break?", W.db.breakMinutes),
-        "Tell group", function() W:SendGroupBreak(task) end)
+      ShowBanner(string.format(L["You're in a group. Tell them you're taking a %d min break?"], W.db.breakMinutes),
+        L["Tell group"], function() W:SendGroupBreak(task) end)
     end
   end
   f:Show()
@@ -134,19 +181,20 @@ end
 
 local function ShowDone(task)
   StopTimer()
+  HideCountdown()
   f:Show()
   f.doneScreen = true
-  kicker:SetText("NICE WORK")
-  stage:Play(W.MOVE_DONE)
-  reason:SetText(string.format("%d exercises done  |  %d day streak", W.db.stats.total, W.db.stats.streak))
-  name:SetText(task.name)
+  kicker:SetText(L["NICE WORK"])
+  stage:PlayExercise(W:RandomDance() or "", W.MOVE_DONE)
+  reason:SetText(string.format(L["%d exercises done  |  %d day streak"], W.db.stats.total, W.db.stats.streak))
+  name:SetText(L[task.name])
   amount:SetText("+" .. task.amount)
-  unit:SetText(task.timed and "seconds" or "reps")
+  unit:SetText(task.timed and L["seconds"] or L["reps"])
   bar:SetShown(true)
   bar:SetProgress(1)
   snooze:Hide(); skip:Hide()
   done:Enable()
-  done:SetLabel("Close")
+  done:SetLabel(L["Close"])
   done:SetScript("OnClick", function() f:Hide() end)
 
   banner:Hide()
@@ -154,7 +202,7 @@ local function ShowDone(task)
     if W.db.askGuild == "always" then
       W:SendGuildDone(task)
     elseif W.db.askGuild == "ask" then
-      ShowBanner("Share it with your guild? Peer pressure works.", "Share", function() W:SendGuildDone(task) end)
+      ShowBanner(L["Share it with your guild? Peer pressure works."], L["Share"], function() W:SendGuildDone(task) end)
       return
     end
   end
@@ -165,6 +213,7 @@ W:On("TASK", ShowTask)
 W:On("TASK_DONE", ShowDone)
 W:On("TASK_CLOSED", function()
   StopTimer()
+  HideCountdown()
   if not f:IsShown() or W.current then return end
   -- keep the window open on the "Nice work" screen, otherwise hide it
   if not f.doneScreen then f:Hide() end

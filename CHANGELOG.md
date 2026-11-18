@@ -1,5 +1,8 @@
 # W'orc out changelog
 
+## 1.0.3
+- Fixed a Lua error spam when entering combat (protected combat values). Distance pauses during combat, and kills are rechecked when combat ends.
+
 ## 1.0.2
 - **Dance on the tracker**: after each finished exercise, your coach dances over the tracker window for 10 seconds.
 - **Pause in dungeons** (Settings > General, "In dungeons too"): workouts wait until you leave dungeons and raids; triggers keep counting.

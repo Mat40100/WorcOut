@@ -209,15 +209,28 @@ end
 
 local lastCapital = 0
 local lastX, lastY, lastMap
+local function Readable(v) return not (issecretvalue and issecretvalue(v)) end
+
+-- true when the player is moving on their own (false on boats/zeppelins standing still)
+local function SelfMoving()
+  if not IsPlayerMoving then return true end
+  local ok, moving = pcall(IsPlayerMoving)
+  if not ok or not Readable(moving) then return true end   -- unknown: rely on the speed cap
+  return moving and true or false
+end
+
 local function DistanceTick()
+  -- In combat this client turns some unit values "secret": don't measure, just restart after.
+  if InCombatLockdown() then lastX = nil; return end
   local y, x, _, map = UnitPosition("player")
-  if not x then lastX = nil; return end
-  -- Only distance you move yourself: no flight paths, boats or zeppelins (your own speed is 0
-  -- there), and nothing faster than running (sprint included) unless mounts count.
-  local speed = GetUnitSpeed("player") or 0
+  if not x or not Readable(x) or not Readable(y) then lastX = nil; return end
+  -- Only distance you move yourself: no flight paths, boats or zeppelins (you are not moving
+  -- yourself there), and nothing faster than running (sprint included) unless mounts count.
+  -- The client may hand addons "secret" values that can't be compared (GetUnitSpeed does):
+  -- never compare a value we can't read.
   local maxSpeed = W.db.countMounted and 15 or 12
   local onFoot = not UnitOnTaxi("player") and (W.db.countMounted or not IsMounted())
-    and speed > 0 and speed <= maxSpeed
+    and SelfMoving()
   if lastX and map == lastMap and onFoot and not UnitIsDeadOrGhost("player") then
     local d = math.sqrt((x - lastX) ^ 2 + (y - lastY) ^ 2)
     if d > 0.5 and d <= maxSpeed * 1.5 then   -- ignore jitter, teleports and anything too fast
@@ -243,7 +256,7 @@ function events.ADDON_LOADED(name)
 end
 
 function events.PLAYER_LOGIN()
-  C_Timer.NewTicker(1, DistanceTick)
+  C_Timer.NewTicker(1, function() pcall(DistanceTick) end)
   C_Timer.NewTicker(60, function()
     W:Add("time", 1, function() return L["%d minutes of play"]:format(W:Trigger("time").every) end)
   end)
@@ -265,8 +278,10 @@ local function CheckKill(unit)
   W:Add("kills", 1, function() return L["%d mobs killed"]:format(W:Trigger("kills").every) end)
 end
 
-function events.UNIT_HEALTH(unit) CheckKill(unit) end
-function events.PLAYER_TARGET_CHANGED() CheckKill("target") end
+-- protected: unit info may be "secret" on this client; a failed check just doesn't count
+local function SafeCheckKill(unit) pcall(CheckKill, unit) end
+function events.UNIT_HEALTH(unit) SafeCheckKill(unit) end
+function events.PLAYER_TARGET_CHANGED() SafeCheckKill("target") end
 
 -- forget old GUIDs so the table stays small
 C_Timer.NewTicker(300, function()
@@ -296,7 +311,10 @@ function events.ZONE_CHANGED_NEW_AREA()
   end
 end
 
-function events.PLAYER_REGEN_ENABLED() W:Pump() end
+function events.PLAYER_REGEN_ENABLED()
+  SafeCheckKill("target")   -- unit info may have been unreadable during the fight
+  W:Pump()
+end
 
 for ev in pairs(events) do f:RegisterEvent(ev) end
 f:SetScript("OnEvent", function(_, ev, ...) events[ev](...) end)

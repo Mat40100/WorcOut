@@ -35,6 +35,7 @@ local DEFAULTS = {
   enabled = true,
   difficulty = 1,          -- global multiplier: 0.5 / 1 / 1.5 / 2
   deferInCombat = true,
+  deferInInstance = false, -- also wait until you leave dungeons and raids
   sound = true,
   askGroup = "ask",        -- ask | always | never
   askGuild = "ask",
@@ -134,6 +135,10 @@ end
 function W:Pump()
   if self.current or #self.queue == 0 then return end
   if self.db.deferInCombat and InCombatLockdown() then return end
+  if self.db.deferInInstance then
+    local inInstance, kind = IsInInstance()
+    if inInstance and (kind == "party" or kind == "raid") then return end
+  end
   self.current = table.remove(self.queue, 1)
   if self.db.sound then PlaySound(SOUNDKIT and SOUNDKIT.READY_CHECK or 8960) end
   self:Fire("TASK", self.current)
@@ -207,10 +212,15 @@ local lastX, lastY, lastMap
 local function DistanceTick()
   local y, x, _, map = UnitPosition("player")
   if not x then lastX = nil; return end
+  -- Only distance you move yourself: no flight paths, boats or zeppelins (your own speed is 0
+  -- there), and nothing faster than running (sprint included) unless mounts count.
+  local speed = GetUnitSpeed("player") or 0
+  local maxSpeed = W.db.countMounted and 15 or 12
   local onFoot = not UnitOnTaxi("player") and (W.db.countMounted or not IsMounted())
+    and speed > 0 and speed <= maxSpeed
   if lastX and map == lastMap and onFoot and not UnitIsDeadOrGhost("player") then
     local d = math.sqrt((x - lastX) ^ 2 + (y - lastY) ^ 2)
-    if d > 0.5 and d < 30 then             -- ignore jitter and teleports
+    if d > 0.5 and d <= maxSpeed * 1.5 then   -- ignore jitter, teleports and anything too fast
       W.yards = (W.yards or 0) + d
       local km = 1093.6                      -- yards per km
       if W.yards >= km then
@@ -275,6 +285,8 @@ end
 function events.PLAYER_DEAD()
   W:Add("death", 1, function() return L["You died"] end)
 end
+
+function events.PLAYER_ENTERING_WORLD() W:Pump() end   -- leaving a dungeon: show queued workouts
 
 function events.ZONE_CHANGED_NEW_AREA()
   local map = C_Map.GetBestMapForUnit("player")

@@ -278,8 +278,17 @@ do
     local sw = UI.Switch(r, function() return W.db[key] end, function(v) W.db[key] = v end)
     sw:SetPoint("RIGHT", -14, 0)
     onRefresh(function() sw:Refresh() end)
+    r.switch = sw
+    return r
   end
-  toggleRow(-64, L["Wait for combat to end"], L["Workouts never pop up mid-fight"], "deferInCombat")
+  local rc = toggleRow(-64, L["Wait for combat to end"], L["Workouts never pop up mid-fight"], "deferInCombat")
+  -- second switch on the same row: also wait until you leave dungeons and raids
+  local dg = UI.Switch(rc, function() return W.db.deferInInstance end, function(v) W.db.deferInInstance = v; W:Pump() end)
+  dg:SetPoint("RIGHT", rc.switch, "LEFT", -70, 0)
+  local dgLabel = UI.Text(rc, 12, C.muted)
+  dgLabel:SetPoint("RIGHT", dg, "LEFT", -8, 0)
+  dgLabel:SetText(L["In dungeons too"])
+  onRefresh(function() dg:Refresh() end)
   toggleRow(-128, L["Sound"], L["Play a sound when a workout starts"], "sound")
   toggleRow(-192, L["Count distance while mounted"], L["Off: only running on foot counts"], "countMounted")
   local r5 = Row(p, -256, 56, L["Coach"], L["Auto: orc for Horde, night elf for Alliance"])

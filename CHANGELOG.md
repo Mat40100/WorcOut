@@ -1,5 +1,11 @@
 # W'orc out changelog
 
+## 1.0.2
+- **Dance on the tracker**: after each finished exercise, your coach dances over the tracker window for 10 seconds.
+- **Pause in dungeons** (Settings > General, "In dungeons too"): workouts wait until you leave dungeons and raids; triggers keep counting.
+- **Distance**: only distance you move yourself counts. Flight paths, boats and zeppelins are now reliably ignored.
+- French: shorter texts so nothing is cut off in the settings.
+
 ## 1.0.1
 - **French translation**: everything switches to French on a French game client (settings, workout window, exercise names, group and guild messages).
 - **Countdown**: after clicking Start, a big 3, 2, 1, GO! appears before the exercise (reps and timed).

@@ -2,7 +2,7 @@
 ## Title: W'orc out
 ## Notes: Workout while you play: exercises triggered by level ups, kills, bosses, distance run, capitals and more.
 ## Author: Mathieu
-## Version: 1.0.1
+## Version: 1.0.2
 ## X-Curse-Project-ID: 1812354
 ## SavedVariables: WorcOutDB
 ## IconTexture: Interface\Icons\Spell_Nature_Strength

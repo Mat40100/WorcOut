@@ -29,7 +29,8 @@ function W:RandomDance()
   for name in pairs(self.SHEETS and self.SHEETS[self:Coach()] or {}) do
     if name:find("^_dance_") then list[#list + 1] = name end
   end
-  return list[1] and list[math.random(#list)]
+  self.lastDance = list[1] and list[math.random(#list)]
+  return self.lastDance
 end
 
 -- Model setup ---------------------------------------------------------------------------

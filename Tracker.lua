@@ -118,3 +118,45 @@ W:On("READY", function()
   W:ApplyTracker()
   C_Timer.NewTicker(2, Update)   -- distance moves between whole km
 end)
+
+-- Victory dance over the tracker for a few seconds after each finished exercise ---------------
+-- (drawn on the tracker itself: above it, it could hide behind the minimap)
+local DANCE_TIME, FADE = 10, 0.6
+local dance = CreateFrame("Frame", nil, f)
+dance:SetPoint("CENTER", f, "CENTER", 0, -6)
+dance:SetFrameLevel(f:GetFrameLevel() + 10)
+dance:Hide()
+local function DimRows(a) for _, r in ipairs(rows) do r:SetAlpha(a) end end
+dance:SetScript("OnHide", function() DimRows(1) end)
+local tex = dance:CreateTexture(nil, "ARTWORK")
+tex:SetAllPoints()
+local sheet, fps, frames, cols, rows, clock
+
+dance:SetScript("OnUpdate", function(self, dt)
+  clock = clock + dt
+  local i = math.floor(clock * fps) % frames
+  local r, c = math.floor(i / cols), i % cols
+  tex:SetTexCoord(c / cols, (c + 1) / cols, r / rows, (r + 1) / rows)
+  local a = math.min(1, (DANCE_TIME - clock) / FADE, clock / 0.3)
+  self:SetAlpha(a)
+  DimRows(1 - a * 0.85)
+  if clock >= DANCE_TIME then self:Hide() end
+end)
+
+W:On("TASK_DONE", function()
+  if not f:IsShown() then return end
+  local sheets = W.SHEETS and W.SHEETS[W:Coach()]
+  sheet = sheets and sheets[W.lastDance or W:RandomDance() or ""]
+  if not sheet then return end
+  cols, rows = sheet.cols or 4, sheet.rows or 4
+  frames = cols * rows
+  fps = frames / math.max(0.5, sheet.duration or 1.3)
+  clock = 0
+  tex:SetTexture(sheet.path)
+  tex:SetTexCoord(0, 1 / cols, 0, 1 / rows)
+  local box = math.max(f:GetHeight() - 24, 90)          -- fit inside the tracker
+  local scale = box / math.max(sheet.w, sheet.h)
+  dance:SetSize(sheet.w * scale, sheet.h * scale)
+  dance:SetAlpha(0)
+  dance:Show()
+end)
